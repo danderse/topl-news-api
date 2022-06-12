@@ -7,35 +7,30 @@ import fs2.Stream
 import org.http4s.ember.client.EmberClientBuilder
 import org.http4s.ember.server.EmberServerBuilder
 import org.http4s.implicits._
+import cats.effect.IO
 import org.http4s.server.middleware.Logger
 
-object ToplnewsapiServer {
+object NewsEventServer {
 
-  def stream[F[_]: Async]: Stream[F, Nothing] = {
+  def stream: Stream[IO, Nothing] = {
     for {
-      client <- Stream.resource(EmberClientBuilder.default[F].build)
-      helloWorldAlg = HelloWorld.impl[F]
-      jokeAlg = Jokes.impl[F](client)
+      client <- Stream.resource(EmberClientBuilder.default[IO].build)
+      newsEventSource = NewsApi(client)
 
-      // Combine Service Routes into an HttpApp.
-      // Can also be done via a Router if you
-      // want to extract segments not checked
-      // in the underlying routes.
       httpApp = (
-        ToplnewsapiRoutes.helloWorldRoutes[F](helloWorldAlg) <+>
-        ToplnewsapiRoutes.jokeRoutes[F](jokeAlg)
+        NewsEventRoutes.routes[IO](newsEventSource)
       ).orNotFound
 
       // With Middlewares in place
       finalHttpApp = Logger.httpApp(true, true)(httpApp)
 
       exitCode <- Stream.resource(
-        EmberServerBuilder.default[F]
+        EmberServerBuilder.default[IO]
           .withHost(ipv4"0.0.0.0")
           .withPort(port"8080")
           .withHttpApp(finalHttpApp)
           .build >>
-        Resource.eval(Async[F].never)
+        Resource.eval(Async[IO].never)
       )
     } yield exitCode
   }.drain
