@@ -4,7 +4,7 @@ import cats.effect.Concurrent
 import io.circe.generic.auto._
 import org.http4s._
 import org.http4s.circe._
-import java.time.OffsetDateTime
+import java.time.ZonedDateTime
 
 final case class NewsEvent(
     title: String,
@@ -12,7 +12,7 @@ final case class NewsEvent(
     content: String,
     image: Option[String],
     url: String,
-    publishedAt: OffsetDateTime,
+    publishedAt: ZonedDateTime,
     wordFrequencyMap: Option[Map[String, Int]],
     source: EventSource
   )
@@ -27,3 +27,12 @@ object NewsEvent {
 }
 
 final case class NewsEventError(e: Throwable) extends RuntimeException
+
+final case class NewsArticles (articles: List[NewsEvent])
+
+object NewsArticles {
+  implicit def newsArticlesEntityDecoder[F[_]: Concurrent]: EntityDecoder[F, NewsArticles] =
+    jsonOf
+  implicit def newsArticlesEntityEncoder[F[_]]: EntityEncoder[F, NewsArticles] =
+    jsonEncoderOf
+}

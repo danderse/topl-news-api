@@ -2,24 +2,30 @@ package io.github.danderse.toplnewsapi
 
 import io.circe.{Decoder, HCursor}
 import org.http4s._
+import org.http4s.circe._
 import org.http4s.client.Client
 import org.http4s.client.dsl.Http4sClientDsl
 import org.http4s.Method._
 import cats.effect.IO
-import java.time.OffsetDateTime
-import java.time.format.DateTimeFormatter._
+import cats.effect.Concurrent
+import java.time.ZonedDateTime
 
 object NewsApi {
+
+  implicit val newsArticlesDecoder: Decoder[NewsArticles] = new Decoder[NewsArticles] {
+    def apply(c: HCursor): Decoder.Result[NewsArticles] = 
+      c.downField("articles").as[List[NewsEvent]].map(NewsArticles(_))
+  }
   
   implicit val newsEventDecoder: Decoder[NewsEvent] = new Decoder[NewsEvent] {
-    final def apply(c: HCursor): Decoder.Result[NewsEvent] =
+    final def apply(c: HCursor): Decoder.Result[NewsEvent] = {
       for {
         title <- c.downField("title").as[String]
         description <- c.downField("description").as[String]
         content <- c.downField("content").as[String]
         image <- c.downField("urlToImage").as[Option[String]]
         url <- c.downField("url").as[String]
-        publishedAt <- c.downField("publishedAt").as[String].map(OffsetDateTime.parse(_, ISO_INSTANT))
+        publishedAt <- c.downField("publishedAt").as[String].map(ZonedDateTime.parse(_))
         sourceId <- c.downField("source").downField("id").as[String]
         sourceName <- c.downField("source").downField("name").as[String]
         source = new EventSource(sourceId, sourceName)
@@ -27,6 +33,13 @@ object NewsApi {
         new NewsEvent(title, description, content, image, url, publishedAt, None, source)
       }
     }
+  }
+
+  implicit def newsEventEntityDecoder[F[_]: Concurrent]: EntityDecoder[F, NewsEvent] =
+    jsonOf
+
+  implicit def newsArticlesEntityDecoder[F[_]: Concurrent]: EntityDecoder[F, NewsArticles] =
+    jsonOf
 
   /*implicit val newsEventEncoder: Encoder[NewsEvent] = new Encoder[NewsEvent] {
     final def apply(event: NewsEvent): Json = Json.obj (
@@ -54,10 +67,10 @@ object NewsApi {
     val dsl = new Http4sClientDsl[IO]{}
     import dsl._
 
-    def get(numArticles: Option[Int], keywords: Option[String]): IO[NewsEvent] = {
+    def get(numArticles: Option[Int], keywords: Option[String]): IO[NewsArticles] = {
       for {
         uri <- IO(constructSearchUri(numArticles, keywords))
-        resp <- C.expect[NewsEvent](GET(uri))
+        resp <- C.expect[NewsArticles](GET(uri))
       } yield(resp)
     }
   }

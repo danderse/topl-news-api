@@ -2,8 +2,11 @@ package io.github.danderse.toplnewsapi
 
 import cats.effect.Sync
 import cats.implicits._
+import org.http4s.circe._
 import org.http4s.HttpRoutes
 import org.http4s.dsl.Http4sDsl
+import io.circe.syntax._
+import io.circe.literal._
 
 object NewsEventRoutes {
 
@@ -16,10 +19,11 @@ object NewsEventRoutes {
 
     HttpRoutes.of[F] {
       case GET -> Root / "news" :? NumArticlesQueryParamMatcher(maybeNumArticles) :? KeywordsQueryParamMatcher(maybeKeywords) =>
-        for {
-          events <- source.get(maybeNumArticles, maybeKeywords)
-          resp <- Ok(events)
-        } yield resp
+        source.get(maybeNumArticles, maybeKeywords)
+          .flatMap(Ok(_))
+          .handleErrorWith(
+            error => InternalServerError(json"""{ "error": ${error.getMessage().asJson}}""")
+          )
     }
   }
 }

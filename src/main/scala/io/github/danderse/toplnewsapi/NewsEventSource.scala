@@ -1,7 +1,7 @@
 package io.github.danderse.toplnewsapi
 
 trait NewsEventSource[F[_]]{
-  def get(numArticles: Option[Int], keywords: Option[String]): F[NewsEvent]
+  def get(numArticles: Option[Int], keywords: Option[String]): F[NewsArticles]
 }
 
 object NewsEventSource { 

@@ -1,4 +1,4 @@
-package io.github.danderse.toplnewsapi
+/*package io.github.danderse.toplnewsapi
 
 import cats.effect.IO
 import org.http4s._
@@ -20,4 +20,4 @@ class HelloWorldSpec extends CatsEffectSuite {
     val helloWorld = HelloWorld.impl[IO]
     ToplnewsapiRoutes.helloWorldRoutes(helloWorld).orNotFound(getHW)
   }
-}
+}*/
