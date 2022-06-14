@@ -7,17 +7,17 @@ import org.http4s.circe._
 import java.time.ZonedDateTime
 
 final case class NewsEvent(
-    title: String,
-    description: String,
-    content: String,
+    title: Option[String],
+    description: Option[String],
+    content: Option[String],
     image: Option[String],
-    url: String,
-    publishedAt: ZonedDateTime,
+    url: Option[String],
+    publishedAt: Option[ZonedDateTime],
     wordFrequencyMap: Option[Map[String, Int]],
     source: EventSource
   )
 
-final case class EventSource(id: String, name: String)
+final case class EventSource(id: Option[String], name: Option[String])
 
 object NewsEvent {
   implicit def newsEventEntityDecoder[F[_]: Concurrent]: EntityDecoder[F, NewsEvent] =

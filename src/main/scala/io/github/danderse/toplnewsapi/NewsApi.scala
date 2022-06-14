@@ -20,14 +20,14 @@ object NewsApi {
   implicit val newsEventDecoder: Decoder[NewsEvent] = new Decoder[NewsEvent] {
     final def apply(c: HCursor): Decoder.Result[NewsEvent] = {
       for {
-        title <- c.downField("title").as[String]
-        description <- c.downField("description").as[String]
-        content <- c.downField("content").as[String]
+        title <- c.downField("title").as[Option[String]]
+        description <- c.downField("description").as[Option[String]]
+        content <- c.downField("content").as[Option[String]]
         image <- c.downField("urlToImage").as[Option[String]]
-        url <- c.downField("url").as[String]
-        publishedAt <- c.downField("publishedAt").as[String].map(ZonedDateTime.parse(_))
-        sourceId <- c.downField("source").downField("id").as[String]
-        sourceName <- c.downField("source").downField("name").as[String]
+        url <- c.downField("url").as[Option[String]]
+        publishedAt <- c.downField("publishedAt").as[Option[String]].map(maybeDate => maybeDate.map(ZonedDateTime.parse(_)))
+        sourceId <- c.downField("source").downField("id").as[Option[String]]
+        sourceName <- c.downField("source").downField("name").as[Option[String]]
         source = new EventSource(sourceId, sourceName)
       } yield {
         new NewsEvent(title, description, content, image, url, publishedAt, None, source)
