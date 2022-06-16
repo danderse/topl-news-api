@@ -20,6 +20,9 @@ object NewsEventRoutes {
     HttpRoutes.of[F] {
       case GET -> Root / "news" :? NumArticlesQueryParamMatcher(maybeNumArticles) :? KeywordsQueryParamMatcher(maybeKeywords) =>
         source.get(maybeNumArticles, maybeKeywords)
+          .map(resp => NewsArticles(
+            articles = resp.articles.map(MetadataService.appendWordFrequencyToEvent(_))
+          ))
           .flatMap(Ok(_))
           .handleErrorWith(
             error => InternalServerError(json"""{ "error": ${error.getMessage().asJson}}""")
