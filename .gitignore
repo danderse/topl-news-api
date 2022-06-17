@@ -1,2 +1,9 @@
-project/*
-target/*
+# sbt
+project/
+target/
+
+# VS code / metals
+.bloop/
+.metals/
+.vscode/
+**/metals.sbt
