@@ -1,7 +1,7 @@
 package io.github.danderse.toplnewsapi
 
-import scala.annotation.tailrec
 import scala.collection.immutable.HashMap
+import scala.annotation.tailrec
 
 object MetadataService {
         
@@ -13,17 +13,17 @@ object MetadataService {
   }
 
   @tailrec
-  def calculateWordFrequency(words: Seq[String], map: Map[String, Int]): Map[String, Int] = {
-    words match {
-      case Nil => map
-      case head :: Nil => updateFrequency(head, map)
-      case head :: tail => calculateWordFrequency(tail, updateFrequency(head, map))
-    }
+  def calculateWordFrequency(words: List[String], map: Map[String, Int]): Map[String, Int] = {
+      words match {
+        case Nil => map
+        case head :: Nil => updateFrequency(head, map)
+        case head :: tail => calculateWordFrequency(tail, updateFrequency(head, map))
+      }
   }
 
   def appendWordFrequencyToEvent(event: NewsEvent): NewsEvent = {
     val wordFrequencyMap = event.content.map(c =>
-      calculateWordFrequency(c.split("\\s").toSeq, new HashMap[String, Int]())
+      calculateWordFrequency(c.replaceAll("[,\\.\\?\\:\\-\\_;]", " ").replaceAll("\\s+", " ").split(" ").toList, new HashMap[String, Int]())
     )
     event.copy(wordFrequencyMap = wordFrequencyMap)
   }

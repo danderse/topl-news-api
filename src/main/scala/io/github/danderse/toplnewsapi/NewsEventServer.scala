@@ -12,13 +12,15 @@ import org.http4s.server.middleware.Logger
 
 object NewsEventServer {
 
+  val CACHE_MAX = 1000
+
   def stream: Stream[IO, Nothing] = {
     for {
       client <- Stream.resource(EmberClientBuilder.default[IO].build)
       newsEventSource = NewsApi(client)
 
       httpApp = (
-        NewsEventRoutes.routes[IO](newsEventSource)
+        NewsEventRoutes.routes[IO](newsEventSource, NewsEventCache(CACHE_MAX))
       ).orNotFound
 
       // With Middlewares in place

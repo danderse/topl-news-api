@@ -41,16 +41,6 @@ object NewsApi {
   implicit def newsArticlesEntityDecoder[F[_]: Concurrent]: EntityDecoder[F, NewsArticles] =
     jsonOf
 
-  /*implicit val newsEventEncoder: Encoder[NewsEvent] = new Encoder[NewsEvent] {
-    final def apply(event: NewsEvent): Json = Json.obj (
-      ("title", Json.fromString(event.title)),
-      ("description", Json.fromString(event.description)),
-      ("content", Json.fromString(event.content)),
-      ("image", Some(Json.fromString(event.image))),
-      ("url", Some(Json.fromString))
-    )
-  }*/
-
   def constructSearchUri(numArticles: Option[Int], keywords: Option[String]): Uri = {
     val baseUri = "https://newsapi.org/v2/everything"
     val token = "4e82d6f5ddc347f2b9446e7fc92ea577"
@@ -63,15 +53,19 @@ object NewsApi {
     }
   }
 
-  def apply(C: Client[IO]): NewsEventSource[IO] = new NewsEventSource[IO]{ //again, what is concurrent doing??
+  def apply(C: Client[IO]): NewsEventSource[IO] = new NewsEventSource[IO] {
     val dsl = new Http4sClientDsl[IO]{}
     import dsl._
 
-    def get(numArticles: Option[Int], keywords: Option[String]): IO[NewsArticles] = {
-      for {
-        uri <- IO(constructSearchUri(numArticles, keywords))
-        resp <- C.expect[NewsArticles](GET(uri))
-      } yield(resp)
+    def get(numArticles: Option[Int], keywords: Option[String], cacheHits: List[NewsEvent]): IO[NewsArticles] = {
+      numArticles match {
+        case Some(0) => IO(NewsArticles(articles = cacheHits))
+        case _ =>
+          for {
+            uri <- IO(constructSearchUri(numArticles, keywords))
+            resp <- C.expect[NewsArticles](GET(uri))
+          } yield(resp)
+      }
     }
   }
 }
